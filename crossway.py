@@ -1,6 +1,6 @@
-################
-# Bibliotheken #
-################
+########################
+#  Bibliotheken laden  #
+########################
 
 from sense_hat import SenseHat
 from time import sleep
@@ -9,13 +9,24 @@ import threading, random
 sense = SenseHat()
 sense.clear()
 
-#######################################
-# Initialisierung Fahrbahn und Ampeln #
-#######################################
+###########################
+#  Definition der Farben  #
+###########################
+
+O = [0, 0, 0] # aus
+Y = [255,255,255] # weiß
+
+r = [255,0,0] # rot
+g = [255,255,0] # gelb
+gr = [64,255,0] # grün
+
+#########################################
+#  Initialisierung Fahrbahn und Ampeln  #
+#########################################
 
 def start():
   
-  ar1 = Y
+  ar1 = Y # da können wir doch auch gleich Y etc. in die matrx schreiben oder?
   age = Y
   ag1 = gr
 
@@ -36,47 +47,59 @@ def start():
 
   sense.set_pixels(init)
 
-#################
-# Ampel Klassen #
-#################
+###################
+#  Ampel Klassen  #
+###################
 
+# Hauptstraße auf grün
 def gruen():
-  sense.set_pixel(0, 4, 64, 255, 0)
-  sense.set_pixel(2, 4, 255, 255, 255)
-  sense.set_pixel(7, 1, 64, 255, 0)
-  sense.set_pixel(5, 1, 255, 255, 255)
-  sense.set_pixel(5, 4, 255, 0, 0)
-  sense.set_pixel(5, 6, 255, 255, 255)
+  sense.set_pixel(0, 4, 64, 255, 0) # grün für Hauptstraße von links
+  sense.set_pixel(2, 4, 255, 255, 255) # Hauptstraße rot ausstellen
+  sense.set_pixel(7, 1, 64, 255, 0)  # grün für Hauptstraße von rechts
+  sense.set_pixel(5, 1, 255, 255, 255) # Hauptstraße rot ausstellen
+  sense.set_pixel(5, 4, 255, 0, 0) # rot für Nebenstraße
+  sense.set_pixel(5, 6, 255, 255, 255) # Nebenstraße grün ausstellen
 
+  # gelbe Ampeln ausschalten
   sense.set_pixel(1, 4, 255,255,255)
   sense.set_pixel(6, 1, 255, 255, 255)
   sense.set_pixel(5, 5, 255, 255, 255)
   
   return "gruen"
 
+# Hauptstraße auf gelb
 def gelb():
-  sense.set_pixel(1, 4, 255,255,0)
-  sense.set_pixel(0, 4, 255, 255, 255)
-  sense.set_pixel(6, 1, 255,255,0)
-  sense.set_pixel(7, 1, 255, 255, 255)
-  sense.set_pixel(5, 5, 255,255,0)
-  sense.set_pixel(5, 4, 255, 255, 255)
+  sense.set_pixel(1, 4, 255,255,0) # gelb für Hauptsraße von links
+  sense.set_pixel(0, 4, 255, 255, 255) # Hauptstraße grün ausstellen
+  sense.set_pixel(6, 1, 255,255,0) # gelb für Hauptsraße von rechts
+  sense.set_pixel(7, 1, 255, 255, 255) # Hauptstraße grün ausstellen
+  sense.set_pixel(5, 5, 255,255,0) # gelb für Nebenstraße
+  sense.set_pixel(5, 4, 255, 255, 255) # Nebenstraße rot ausstellen
 
+  # Hauptstraße rote Ampeln
   sense.set_pixel(2, 4, 255, 255, 255)
   sense.set_pixel(5, 1, 255, 255, 255)
+
+  # Nebenstraße grüne Ampel ausstellen
   sense.set_pixel(5, 6, 255, 255, 255)
+
   return "gelb"
   
+# Hauptstraße auf rot
 def rot():
-  sense.set_pixel(2, 4, 255, 0, 0)
-  sense.set_pixel(1, 4, 255,255,255)
-  sense.set_pixel(5, 1, 255, 0, 0)
-  sense.set_pixel(6, 1, 255,255,255)
-  sense.set_pixel(5, 6, 64, 255, 0)
-  sense.set_pixel(5, 5, 255,255,255)
+  sense.set_pixel(2, 4, 255, 0, 0) # rot für Hauptsraße von links
+  sense.set_pixel(1, 4, 255,255,255) # Hauptstraße gelb ausstellen
+  sense.set_pixel(5, 1, 255, 0, 0)  # rot für Hauptsraße von rechts
+  sense.set_pixel(6, 1, 255,255,255) # Hauptstraße gelb ausstellen
+  sense.set_pixel(5, 6, 64, 255, 0) # grün für Nebenstraße
+  sense.set_pixel(5, 5, 255,255,255) # Nebenstraße gelb ausstellen
+
   return "rot"
 
-#Ampel
+#####################
+#  Ampel Durchlauf  #
+#####################
+
 def Ampel():
   sleep(2)
   gelb()
@@ -87,7 +110,7 @@ def Ampel():
   sleep(1)
   gruen()
 
-#Prüfe, wie viele Autos an Nebenstraße
+#  Prüfe, wie viele Autos an Nebenstraße
 def AmpelNS():
   while True:
     ns1 = sum(sense.get_pixel(4,4))
@@ -99,13 +122,13 @@ def AmpelNS():
     ns4 = sum(sense.get_pixel(4,7))
     
     
-    if ns1 and ns2 and ns3 and ns4 > 11:
+    if ns1 and ns2 and ns3 and ns4 > 11: # Warum 11?
       Ampel()
       sleep(10) # Zeit zum Abfahren der 4 Autos
 
-#################
-# Autos fahrend #
-#################
+#########################
+#  Autos fahren lassen  #
+#########################
 
 # Hauptstraße, von links
 def carsl():
@@ -142,9 +165,9 @@ def carsul():
     sleep(0.3)
     sense.set_pixel(4-j, 2, 0, 0, 0)
     
-#################
-# Autos löschen #
-#################
+###################
+#  Autos löschen  #
+###################
 
 # Autos löschen, Ampel Nebenstraße
 def carsuloesch():
@@ -162,7 +185,7 @@ def Cars_u():
   c = 0
   T2 = 0
   while T2 == 0:
-    na4 = sum(sense.get_pixel(5,6))
+    na4 = sum(sense.get_pixel(5,6)) # Nebenstraßenampel grün
     if na4 == 316:
       
       for y in range(4):
@@ -189,9 +212,9 @@ def Cars_u():
       continue
     
   
-##################
-# Autos an Ampel #
-##################
+####################
+#  Autos an Ampel  #
+####################
 
 # 4 Autos von unten + warten an Ampel
 def carau():
@@ -260,24 +283,26 @@ def carar():
       
     sleep(sl)
     
-#######################
-# zufällige Szenarien #
-#######################
+#########################
+#  zufällige Szenarien  #
+#########################
 
 # obere Fahrbahn, zuf. Autos & Sleep, Multithreading
 def oF():
   u={}
   x = 0
   while True:
-    na1 = sum(sense.get_pixel(5,5))
-    na2 = sum(sense.get_pixel(5,6))
+    na1 = sum(sense.get_pixel(5,5)) # Nebenstraßenampel gelb
+    na2 = sum(sense.get_pixel(5,6)) # Nebenstraßenampel grün
     
-    if na1 == 500 or na2 == 316:
+    if na1 == 500 or na2 == 316: # während des Umschaltens
       
       break
     else:
       random.seed()
-      car_nr = random.randint(1, 4)
+
+      # zufälliges ziehen von Autos
+      car_nr = random.randint(1, 4) 
       if car_nr == 1 or car_nr == 3:
         car = carsl
       elif car_nr == 2 or car_nr == 4:
@@ -297,7 +322,7 @@ def oF():
 def oH():
   T = 0
   while T == 0:
-    na3 = sum(sense.get_pixel(5,6))
+    na3 = sum(sense.get_pixel(5,6)) # Nebenstraßenampel grün
     if na3 == 316:
       h2 = threading.Thread(target=caral)
       h2.start()
@@ -308,24 +333,14 @@ def oH():
     else:
       continue
     
-
-# Farbenbsp.
-O = [0, 0, 0] # aus
-Y = [255,255,255] # weiß
-
-r = [255,0,0]
-g = [255,255,0]
-gr = [64,255,0]
-
-
-####################
-### Hauptprogramm ##
-####################
+######################
+###  Hauptprogramm  ##
+######################
 
 start()
 
 
-## erstens()
+# erstens()
 
 f1 = threading.Thread(target=oF) # oben fahren
 f1.start()
@@ -334,7 +349,7 @@ h1.start()
 a1 = threading.Thread(target=AmpelNS) # Ampel prüfen
 a1.start()
 
-## zweitens
+# zweitens
 
 b1 = threading.Thread(target=oH) # oben prüfen und füllen
 b1.start()
@@ -357,8 +372,6 @@ f2.start()
     grün schalten
     von vorn beginnen'''
   
-
-
 
 
 # Multithreading
