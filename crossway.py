@@ -190,6 +190,8 @@ def Cars_u():
       
       for y in range(4):
         sleep(2)
+
+        # zufällige ziehen ob Autos nach links oder rechts fahren
         random.seed()
         ulr = random.randint(1, 4)
         if ulr == 1 or ulr == 3:
@@ -203,7 +205,7 @@ def Cars_u():
     
         c += 1
         if c == 1:
-          ul_r6 = threading.Thread(target=carsuloesch)
+          ul_r6 = threading.Thread(target=carsuloesch) # abgefahrenes Auto löschen
           ul_r6.start()
         else:
           continue
@@ -212,9 +214,9 @@ def Cars_u():
       continue
     
   
-####################
-#  Autos an Ampel  #
-####################
+###########################
+#  Autos zur Ampel fahren #
+###########################
 
 # 4 Autos von unten + warten an Ampel
 def carau():
