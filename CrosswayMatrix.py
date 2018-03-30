@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 #############
 #  Importe  #
 #############
@@ -67,19 +69,21 @@ def matrixToSensehat():
 		if matrix[i] == 0:
 			sense.set_pixel(Spalte, Zeile, 0, 0, 0) # aus
 		elif matrix[i] == 1:
-			sense.set_pixel(Spalte, Zeile, 255, 255, 255) # weiß
+			sense.set_pixel(Spalte, Zeile, 255, 255, 255) # weiß - Straßengrenze
 		elif matrix[i] == 2:
-			sense.set_pixel(Spalte, Zeile, 255, 0, 0) # rot
+			sense.set_pixel(Spalte, Zeile, 255, 0, 0) # rot - Ampel & Autos
 		elif matrix[i] == 3:
-			sense.set_pixel(Spalte, Zeile, 255, 255, 0) # gelb
+			sense.set_pixel(Spalte, Zeile, 255, 255, 0) # gelb - Ampel
 		elif matrix[i] == 4:
-			sense.set_pixel(Spalte, Zeile, 64, 255, 0) # grün
+			sense.set_pixel(Spalte, Zeile, 64, 255, 0) # grün - Ampel
 		elif matrix[i] == 5:
-			sense.set_pixel(Spalte, Zeile, 255, 0, 0) # rot
+			sense.set_pixel(Spalte, Zeile, 255, 0, 0) # rot - Autos die von der Nebenstraße nach links abbiegen wollen
 		elif matrix[i] == 6:
-			sense.set_pixel(Spalte, Zeile, 255, 0, 0) # rot
+			sense.set_pixel(Spalte, Zeile, 255, 0, 0) # rot - Autos die von der Hauptstraße in die Nebenstraße abbiegen wollen
 		elif matrix[i] == 7:
-			sense.set_pixel(Spalte, Zeile, 0, 0, 255) # blau
+			sense.set_pixel(Spalte, Zeile, 0, 0, 255) # blau - LKWs
+		elif matrix[i] == 8:
+			sense.set_pixel(Spalte, Zeile, 0, 0, 255) # blau - LKWs die von der Hauptstraße in die Nebenstraße abbiegen wollen
 
 ####################
 #  Ampel Function  #
@@ -158,7 +162,7 @@ def Ampel(Iterationszahl, Ampelvariable, CoolDown):
 			return [0,6]
 
 	# Wenn zuviele Autos an der Nebenstraße anstehen, auf gelb schalten
-	elif matrix[36] != 0 and matrix[44] != 0 and matrix[52] != 0 and CoolDown == 0: 
+	elif matrix[36] != 0 and CoolDown == 0: 
 		# Hauptstraße
 		matrix[34] = 1
 		matrix[33] = 3
@@ -199,79 +203,193 @@ def Ampel(Iterationszahl, Ampelvariable, CoolDown):
 #####################
 #  Update Function  #
 #####################
-def updateMatrix():
-	# Spurreihenfolge wichtig! Bei Spurwechsel kommt es sonst zum "doppel-update"
-	# 4. Spur - Nebenstraße von oben
+def updateMatrix(Iterationszahl):
+	### Spurreihenfolge wichtig! Bei Spurwechsel kommt es sonst zum "doppel-update" ###
+	### 4. Spur - Nebenstraße von oben ###
 	for i in range(59,27,-8):
 		if i == 59 and matrix[i] != 0: # Auto über den Rand fahren lassen
-			matrix[i] = 0
-		elif matrix[i] != 0 and matrix[i+8] == 0:
+			if matrix[i] == 7 and Iterationszahl % 2 == 0: # LKW (halb so schnell)
+				matrix[i] = 0
+			else: # Auto
+				matrix[i] = 0
+		elif matrix[i] == 2 and matrix[i+8] == 0: # Auto weiterfahren lassen
 			matrix[i] = 0
 			matrix[i+8] = 2
+		elif matrix[i] == 7 and matrix[i+8] != 2: # LKW weiterfahren lassen
+			matrix[i] = 0
+			matrix[i+8] = 7
 
-	# 2. Spur - Hauptstraße von links
+	### 2. Spur - Hauptstraße von links ###
 	for i in range(31,23,-1):
-		if i == 31 and matrix[i] != 0: # Auto über den Rand fahren lassen
-			matrix[i] = 0
-		elif i == 26: # Kritischer Punkt für die Ampel
-			if matrix[32] == 4 and matrix[i] != 0 and matrix[i+1] == 0 and matrix[i+2] == 0: # nur fahren falls Punkt frei + Abstand einhalten
+		# Auto über den Rand fahren lassen
+		if i == 31 and matrix[i] != 0: 
+			# LKW (halb so schnell)
+			if matrix[i] == 7 and Iterationszahl % 2 == 0: 
+				matrix[i] = 0
+			else: # Auto
+				matrix[i] = 0
+		# Kritischer Punkt für die Ampel
+		elif i == 26: 
+			# Auto
+			# nur fahren falls Punkt frei + grün + Abstand einhalten
+			if matrix[32] == 4 and matrix[i] == 2 and matrix[i+1] == 0 and matrix[i+2] == 0: 
 				matrix[i] = 0
 				matrix[i+1] = 2
-		elif i == 27 and matrix[i] == 2: # Kritischer Punkt für Abbieger in Nebenstraße
-			zz = rnd.randint(1,100)
-			if zz <= 10 and matrix[i+8] == 0: # in 10% der Fälle
+			# LKW
+			elif matrix[32] == 4 and matrix[i] == 7 and matrix[i+1] != 2 and matrix[i+2] == 0 and Iterationszahl % 2 == 0:
 				matrix[i] = 0
-				matrix[i+8] = 2
-			elif zz <= 10: # Wenn noch nicht frei, Auto als wartend speichern
-				matrix[i] = 6
-			elif matrix[i+1] == 0: # normal weiter fahren
+				matrix[i+1] = 7
+			# LKW im ganzen über die Ampel fahren lassen
+			elif matrix[i] == 7 and matrix[i+1] == 0 and matrix[i+2] == 7 and Iterationszahl % 2 == 0: 
 				matrix[i] = 0
-				matrix[i+1] = 2
-		elif i == 27 and matrix[i] == 6 and matrix[i+8] == 0: # Abbieger in Nebenstraße
-			matrix[i] = 0
-			matrix[i+8] = 2
-		elif matrix[i] != 0 and matrix[i+1] == 0: # wenn auf i ein Auto und der nächste Platz frei ist, fahren
-			matrix[i] = 0
-			matrix[i+1] = 2
-		elif matrix[i] == 5 and matrix[i-8] != 5:
-			matrix[i] = 0
-			matrix[i-8] = 2
-
-	# 1. Spur - Hauptstraße von rechts
-	for i in range(16,24):
-		if i == 16 and matrix[i] != 0: # Auto über den Rand fahren lassen
-			matrix[i] = 0
-		elif i == 21: # Kritischer Punkt für die Ampel
-			if matrix[15] == 4 and matrix[i] != 0 and matrix[i-1] == 0 and matrix[i-2] == 0: # nur fahren falls Punkt frei + Abstand einhalten
-				matrix[i] = 0
-				matrix[i-1] = 2
-		elif i == 19 and matrix[i] == 2: # Kritischer Punkt für Abbieger in Nebenstraße
+				matrix[i+1] = 7
+		# Kritischer Punkt für Abbieger in Nebenstraße
+		elif i == 27 and (matrix[i] == 2 or matrix[i] == 7): 
 			zz = rnd.randint(1,100)
 			if zz <= 10: # in 10% der Fälle
-				if matrix[27] == 0 and matrix[26] == 0 and matrix[35] == 0:
+				# Auto
+				if matrix[i] == 2 and matrix[i+8] == 0:
 					matrix[i] = 0
-					matrix[i+8] = 6
-				else:
+					matrix[i+8] = 2
+				# Wenn noch nicht frei, Auto als wartend speichern
+				elif matrix[i] == 2 and matrix[i+8] != 0: 
 					matrix[i] = 6
-			elif matrix[i-1] == 0: # normal weiter fahren
+				# LKW
+				elif matrix[i] == 7 and matrix[i+8] == 0 and Iterationszahl % 2 == 0:
+					matrix[i] = 8
+					matrix[i-1] = 0
+					matrix[i+8] = 7
+				# Wenn noch nicht frei, LKW als wartend speichern
+				elif matrix[i] == 7 and matrix[i+8] != 0: 
+					matrix[i] = 8
+			else: # normal weiter fahren
+				# Auto
+				if matrix[i] == 2 and matrix[i+1] == 0:
+					matrix[i] = 0
+					matrix[i+1] = 2
+				# LKW
+				elif matrix[i] == 7 and matrix[i+1] != 2 and Iterationszahl % 2 == 0:
+					matrix[i] = 0
+					matrix[i+1] = 7
+		# Abbieger in Nebenstraße wartet bereits
+		elif i == 27 and matrix[i+8] == 0 and (matrix[i] == 6 or matrix[i] == 8): 
+			# Auto
+			if matrix[i] == 6:
+				matrix[i] = 0
+				matrix[i+8] = 2
+			# LKW
+			elif matrix[i] == 8 and Iterationszahl % 2 == 0:
+				matrix[i] = 0
+				matrix[i+8] = 7
+		# Falls der erste Teil des LKWs bereits auf dem Feld ist (halb so schnell)
+		elif i == 24 and matrix[i] == 7 and matrix[i+2] != 7 and Iterationszahl % 2 == 0: 
+			matrix[i+1] = 7
+		# wenn auf i ein Auto und der nächste Platz frei ist, fahren
+		elif matrix[i] == 2 and matrix[i+1] == 0: 
+			matrix[i] = 0
+			matrix[i+1] = 2
+		# wenn auf i ein LKW und der nächste Platz frei ist, fahren
+		elif matrix[i] == 7 and matrix[i+1] == 0 and Iterationszahl % 2 == 0: 
+			matrix[i] = 0
+			matrix[i+1] = 7
+		# Auto, dass von der Nebenstraße nach links fahren möchte
+		elif matrix[i] == 5 and matrix[i-8] == 0: 
+			matrix[i] = 0
+			matrix[i-8] = 2
+		# LKW, dass von der Nebenstraße nach links fahren möchte
+		elif matrix[i] == 9 and matrix[i-8] != 2: 
+			matrix[i] = 0
+			matrix[i-8] = 7
+
+	### 1. Spur - Hauptstraße von rechts ###
+	for i in range(16,24):
+		# Auto über den Rand fahren lassen
+		if i == 16 and matrix[i] != 0: 
+			if matrix[i] == 7 and Iterationszahl % 2 == 0: # LKW
+				matrix[i] = 0
+			else: # Auto
+				matrix[i] = 0
+		# Kritischer Punkt für die Ampel
+		elif i == 21: 
+			# Auto - nur fahren falls Punkt frei + Abstand einhalten
+			if matrix[15] == 4 and matrix[i] == 2 and matrix[i-1] == 0 and matrix[i-2] == 0: 
 				matrix[i] = 0
 				matrix[i-1] = 2
-		elif i == 19 and matrix[i] == 6: # falls ein Auto zum abbiegen bereits wartet
-			if matrix[27] == 0 and matrix[26] == 0 and matrix[35] == 0:
+			# LKW - nur fahren falls Punkt frei + Abstand einhalten (außer wenn anderes LKW-Teil)
+			elif matrix[15] == 4 and matrix[i] == 7 and matrix[i-1] == 0 and matrix[i-2] != 2 and Iterationszahl % 2 == 0: 
+				matrix[i] = 0
+				matrix[i-1] = 7
+			# LKW im ganzen über die Ampel fahren lassen
+			elif matrix[i] == 7 and matrix[i-1] == 0 and matrix[i-2] == 7 and Iterationszahl % 2 == 0: 
+				matrix[i] = 0
+				matrix[i-1] = 7
+		# Kritischer Punkt für Abbieger in Nebenstraße
+		elif i == 19 and (matrix[i] == 2 or matrix[i] == 7): 
+			zz = rnd.randint(1,100)
+			if zz <= 10: # in 10% der Fälle
+				# Auto
+				if matrix[27] == 0 and matrix[26] == 0 and matrix[35] == 0: 
+					matrix[i] = 0
+					matrix[i+8] = 6
+				elif matrix[i] == 2:
+					matrix[i] = 6
+				# LKW
+				elif matrix[27] == 0 and matrix[26] == 0 and matrix[35] == 0 and matrix[25] == 0  and Iterationszahl % 2 == 0: 
+					matrix[i] = 8
+					matrix[i+8] = 8
+					matrix[i+1] = 0
+				else:
+					matrix[i] = 8
+			# normal weiter fahren - Auto
+			elif matrix[i-1] == 0  and matrix[i] == 2: 
+				matrix[i] = 0
+				matrix[i-1] = 2
+			# normal weiter fahren - LKW
+			elif matrix[i-1] == 0  and matrix[i] == 7 and Iterationszahl % 2 == 0: 
+				matrix[i] = 0
+				matrix[i-1] = 7
+		# Kritischer Punkt für Abbieger in Nebenstraße - falls ein Auto zum abbiegen bereits wartet
+		elif i == 19 and (matrix[i] == 6 or matrix[i] == 8): 
+			# Auto
+			if matrix[27] == 0 and matrix[26] == 0 and matrix[35] == 0 and matrix[i] == 6:  
 				matrix[i] = 0
 				matrix[i+8] = 6
-			elif matrix[27] == 0 and matrix[35] == 0 and matrix[34] == 2: # Hauptstraße rot hat und es frei ist darf er auch abbiegen
+			# Hauptstraße rot hat und es frei ist darf er auch abbiegen - Auto
+			elif matrix[27] == 0 and matrix[35] == 0 and matrix[34] == 2 and matrix[i] == 6: 
 				matrix[i] = 0
 				matrix[i+8] = 6
-		elif i == 23 and matrix[i] == 7 and matrix[i-1] != 7: # Falls der erste Teil des LKWs bereits auf dem Feld ist
+			# LKW - 2. Teil wartet (fährt aufjedenfall "hinterher")
+			elif matrix[i] == 8 and matrix[i+16] == 7 and Iterationszahl % 2 == 0: 
+				matrix[i] = 0
+				matrix[i+8] = 6
+			# LKW - 1.Teil wartet
+			elif matrix[27] == 0 and matrix[26] == 0 and matrix[35] == 0 and matrix[25] == 0 and matrix[i] == 8 and matrix[i+1] == 7 and Iterationszahl % 2 == 0: 
+				matrix[i+8] = 8
+				matrix[i+1] = 0
+			# Hauptstraße rot hat und es frei ist darf er auch abbiegen - LKW
+			elif matrix[27] == 0 and matrix[35] == 0 and matrix[34] == 2 and matrix[i] == 8 and Iterationszahl % 2 == 0: 
+				if matrix[i+1] == 7: # 1. Teil des LKW wartet
+					matrix[i+1] = 0
+					matrix[i+8] = 8
+				else: # 2. Teil des LKW wartet
+					matrix[i] = 0
+					matrix[i+8] = 8
+		# Falls der erste Teil des LKWs bereits auf dem Feld ist (halb so schnell)
+		elif i == 23 and matrix[i] == 7 and matrix[i-2] != 7 and Iterationszahl % 2 == 0: 
 			matrix[i-1] = 7
-		elif matrix[i] != 0 and matrix[i-1] == 0: # wenn auf i ein Auto und der nächste Platz frei ist, fahren
+		# wenn auf i ein Auto und der nächste Platz frei ist, fahren
+		elif matrix[i] == 2 and matrix[i-1] == 0: 
 			matrix[i] = 0
 			matrix[i-1] = 2
+		# wenn auf i ein LKW und der nächste Platz frei ist, fahren
+		elif matrix[i] == 7 and matrix[i-1] == 0 and Iterationszahl % 2 == 0: 
+			matrix[i] = 0
+			matrix[i-1] = 7
 
 	# 3. Spur - Nebenstraßevon von unten
 	for i in range(36,68,8):
-		if i == 36 and matrix[i] != 0 and matrix[53] == 4 and matrix[i-8] == 0 and matrix[i-16] == 0 and matrix[i-8+1] == 0: # Auto ab der Ampel fahren lassen, wenn frei und Abstand eingehalten
+		# Auto ab der Ampel fahren lassen, wenn frei und Abstand eingehalten
+		if i == 36 and matrix[i] == 2 and matrix[53] == 4 and matrix[i-8] == 0 and matrix[i-16] == 0 and matrix[i-8+1] == 0: 
 			zz = rnd.randint(0,1)
 			if zz == 0: # links abbiegen
 				matrix[i] = 0
@@ -279,7 +397,8 @@ def updateMatrix():
 			else: # rechts abbiegen
 				matrix[i] = 0
 				matrix[i-8] = 2
-		elif i != 36 and matrix[i] != 0 and matrix[i-8] == 0: # wenn auf i ein Auto und der nächste Platz frei ist, fahren
+		# wenn auf i ein Auto und der nächste Platz frei ist, fahren
+		elif i != 36 and matrix[i] == 2 and matrix[i-8] == 0:
 			matrix[i] = 0
 			matrix[i-8] = 2
 
@@ -313,30 +432,28 @@ while True:
 		cd -= 1
 
 	time.sleep(1)
-	updateMatrix()
+	updateMatrix(Iteration)
 	
 	# Matrix auf SenseHat spielen
 	matrixToSensehat()
 
-	# Zufällige generierung von Autos
-	zz = rnd.randint(0,6)
+	# Zufällige generierung von Autos mit gewpnschten Prozentwerten
+	zz = rnd.randint(1,42)
 	time.sleep(0.3)
-	if zz == 1 and matrix[25] == 0: # Hauptstraße von links + Abstandsbedingung von einem Bildpunkt
+	if zz <= 18 and matrix[25] == 0 and matrix[24] == 0: # Hauptstraße von links + Abstandsbedingung von einem Bildpunkt
 		matrix[24] = 2
-	elif zz == 2 and matrix[22] == 0: # Hauptstraße von rechts + Abstandsbedingung von einem Bildpunkt
+	elif zz > 18 and zz <= 36 and matrix[22] == 0 and matrix[23] == 0: # Hauptstraße von rechts + Abstandsbedingung von einem Bildpunkt
 		matrix[23] = 2
-	elif zz == 3 and matrix[52] == 0: # Nebenstraße von unten + Abstandsbedingung von einem Bildpunkt
+	elif zz > 36 and zz <= 40 and matrix[52] == 0 and matrix[60] == 0: # Nebenstraße von unten + Abstandsbedingung von einem Bildpunkt
 		matrix[60] = 2
-	elif laneCheck(1) <= 1 and matrix[22] == 0: # wenn zu wenige Fahrzeuge von rechts unterwegs sind
+	elif laneCheck(1) <= 1 and matrix[22] == 0 and matrix[23] == 0: # wenn zu wenige Fahrzeuge von rechts unterwegs sind
 		matrix[23] = 2
-	elif laneCheck(2) <= 1 and matrix[25] == 0: # wenn zu wenige Fahrzeuge von links unterwegs sind
+	elif laneCheck(2) <= 1 and matrix[25] == 0 and matrix[24] == 0: # wenn zu wenige Fahrzeuge von links unterwegs sind
 		matrix[24] = 2
-	elif zz == 6 and matrix[25] != 2: # LKW von links auf die Hauptstraße
+	elif zz == 41 and matrix[25] == 0 and matrix[24] == 0: # LKW von links auf die Hauptstraße
 		matrix[24] = 7
-	elif zz == 7 and matrix[22] != 2: # LKW von rechtss auf die Hauptstraße
+	elif zz == 42 and matrix[22] == 0 and matrix[23] == 0: # LKW von rechtss auf die Hauptstraße
 		matrix[23] =  7
-	elif zz == 8 and matrix[52] != 2: # LKW von unten auf die Nebenstraße
-		matrix[60] = 7
 	matrixToSensehat()
 
 	# Updaten ob die Ampel von Gelb auf Grün oder auf Rot schalten muss
@@ -349,9 +466,5 @@ while True:
 
 
 # To Do:
-# 	- LKW auftauchen lassen (2 Punkte sofort oder merken bis zur nächsten Iteration?)
-#	- extra Zahl und Farbe für LKW (7, blau)
-#	- LKW Bewegung ohne Abstand zu sich selbst
-#	- "halb so schnell" nur in "Iteration % 2 == 0" LKW bewegen
-#	- Wahrscheinlichkeiten prüfen
+#	- LKW Bewegung ohne Abstand zu sich selbst aber zu anderen LKW
 #	- Auffahren bis zur Ampel
