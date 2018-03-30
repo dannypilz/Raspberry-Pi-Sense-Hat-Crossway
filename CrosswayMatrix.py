@@ -463,8 +463,3 @@ while True:
 
 	# Iterationzähler für Ampelschaltung nach Zeit
 	Iteration += 1
-
-
-# To Do:
-#	- LKW Bewegung ohne Abstand zu sich selbst aber zu anderen LKW
-#	- Auffahren bis zur Ampel
