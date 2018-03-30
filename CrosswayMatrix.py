@@ -209,13 +209,16 @@ def updateMatrix(Iterationszahl):
 	for i in range(59,27,-8):
 		if i == 59 and matrix[i] != 0: # Auto über den Rand fahren lassen
 			if matrix[i] == 7 and Iterationszahl % 2 == 0: # LKW (halb so schnell)
-				matrix[i] = 0
+				if matrix[i-8] == 7:
+					matrix[i-8] = 0
+				else:
+					matrix[i] = 0
 			else: # Auto
 				matrix[i] = 0
 		elif matrix[i] == 2 and matrix[i+8] == 0: # Auto weiterfahren lassen
 			matrix[i] = 0
 			matrix[i+8] = 2
-		elif matrix[i] == 7 and matrix[i+8] != 2: # LKW weiterfahren lassen
+		elif matrix[i] == 7 and matrix[i+8] != 2 and Iterationszahl % 2 == 0: # LKW weiterfahren lassen
 			matrix[i] = 0
 			matrix[i+8] = 7
 
@@ -225,7 +228,10 @@ def updateMatrix(Iterationszahl):
 		if i == 31 and matrix[i] != 0: 
 			# LKW (halb so schnell)
 			if matrix[i] == 7 and Iterationszahl % 2 == 0: 
-				matrix[i] = 0
+				if matrix[i-1] == 7:
+					matrix[i-1] = 0
+				else:
+					matrix[i] = 0
 			else: # Auto
 				matrix[i] = 0
 		# Kritischer Punkt für die Ampel
@@ -243,8 +249,8 @@ def updateMatrix(Iterationszahl):
 			elif matrix[i] == 7 and matrix[i+1] == 0 and matrix[i+2] == 7 and Iterationszahl % 2 == 0: 
 				matrix[i] = 0
 				matrix[i+1] = 7
-		# Kritischer Punkt für Abbieger in Nebenstraße
-		elif i == 27 and (matrix[i] == 2 or matrix[i] == 7): 
+		# Kritischer Punkt für Abbieger in Nebenstraße (prüfen ob erster LKW Teil schon weiter geradeaus gefahren ist)
+		elif i == 27 and (matrix[i] == 2 or (matrix[i] == 7 and matrix[i+2] != 7)): 
 			zz = rnd.randint(1,100)
 			if zz <= 10: # in 10% der Fälle
 				# Auto
@@ -306,7 +312,10 @@ def updateMatrix(Iterationszahl):
 		# Auto über den Rand fahren lassen
 		if i == 16 and matrix[i] != 0: 
 			if matrix[i] == 7 and Iterationszahl % 2 == 0: # LKW
-				matrix[i] = 0
+				if matrix[i+1] == 7:
+					matrix[i+1] = 0
+				else:
+					matrix[i] = 0
 			else: # Auto
 				matrix[i] = 0
 		# Kritischer Punkt für die Ampel
@@ -323,8 +332,8 @@ def updateMatrix(Iterationszahl):
 			elif matrix[i] == 7 and matrix[i-1] == 0 and matrix[i-2] == 7 and Iterationszahl % 2 == 0: 
 				matrix[i] = 0
 				matrix[i-1] = 7
-		# Kritischer Punkt für Abbieger in Nebenstraße
-		elif i == 19 and (matrix[i] == 2 or matrix[i] == 7): 
+		# Kritischer Punkt für Abbieger in Nebenstraße (prüfen ob erster LKW Teil schon weiter geradeaus gefahren ist)
+		elif i == 19 and (matrix[i] == 2 or (matrix[i] == 7 and matrix[i-2] != 7)): 
 			zz = rnd.randint(1,100)
 			if zz <= 10: # in 10% der Fälle
 				# Auto
@@ -361,7 +370,7 @@ def updateMatrix(Iterationszahl):
 			# LKW - 2. Teil wartet (fährt aufjedenfall "hinterher")
 			elif matrix[i] == 8 and matrix[i+16] == 7 and Iterationszahl % 2 == 0: 
 				matrix[i] = 0
-				matrix[i+8] = 6
+				matrix[i+8] = 8
 			# LKW - 1.Teil wartet
 			elif matrix[27] == 0 and matrix[26] == 0 and matrix[35] == 0 and matrix[25] == 0 and matrix[i] == 8 and matrix[i+1] == 7 and Iterationszahl % 2 == 0: 
 				matrix[i+8] = 8
